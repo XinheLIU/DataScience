@@ -1,0 +1,62 @@
+# Statistic Basics
+
+- 实验，因果推断（归因，度量）
+- 指标体系 google analytics
+- 数据挖掘（大组周报）
+  - 现象分析归因
+  - Distributions
+  - Mind map
+  - CLT Proof
+  - Bayesian Theorem calculations
+  - Gamma, beta and poisson
+- 补充Math Notes basic knowledge 和知识导图（github）—— 从hypothesis test 开始, CLT 为界
+  - Dummy variable: 多分类中自变量和因变量是非线性关系
+  - Degree of freedom: 变量越多，需要样本量越大
+- Distributions : review Bayesian Notes
+  - Binomial, possion, geometric
+  - Logistic, normal, t, gamma
+  - Kai square 
+    - 实际频数和理论频数的（iid N(0,1) 加和）抽样误差 kai^2 = Z^2 自由度增加，偏度减小，趋近于正态（Z1^2 + ...+Z^n)
+  - F-dist: 
+    - 方差比的分布（抽取两个n1, n2正太样本 s1^2/s_2^2) 服从 n_1 -1, n_2 -1 的F分布
+    - ANOVA （方差分析——组间组内方差比）， 方差齐性检验（两个方差比）， 回归模型检验（模型vs残差方差）
+- Descriptive statis
+  - Mean, median
+  - var, CV, percentie, z-value
+  - Proportion, rate
+- estimation
+  - OLS, MLE, point extimation
+  - Interval estimation, confident interval
+  - Bayesian estimation (Bayesian Analytics)
+- Hypothesis Tests
+  - 正态性检验
+    - SW-test; based on kurtosis and skewness
+    - 拟合优度检验：KS Test, CVM test（平方差）, AD Test
+    - QQ-plot, pp-plot, stem-leave plto
+    - Box plot
+  - 方差齐性检验
+    - F-test (Hartley Test)
+    - Levene Test
+      - 每一组内观测值和均值的偏离程度
+    - Box-plot
+    - BP Method
+      - 因变量残差作为纵轴，自变脸横轴
+      - 构建回归模型，斜率不显著
+    - White Test
+      - 多元线性模型
+  - 比较检验
+    - T-test
+      - Assume mean diff is normalyt distributed(小样本)
+      - 偏态检验 Wilcoxon ranking-sum Test/non-parametric test
+        - 排序之后相等
+    - z-test
+  - F-Test, ANOVA
+    - F= 组内方差/组间方差
+      - 单因素方差分析（treatment on different groups)
+      - 与线性模型的关联：模型：组建因素，误差：组内因素
+  - chi^2 test
+    - 理论频数和实际频数差距
+  - 多重比较
+  - Computational/nonparametric test
+    - Bootstrap
+- Test of correlation and consistensy (一致性分析）
