@@ -10,6 +10,13 @@
         - [1. Problem \& Assumptions formulation](#1-problem--assumptions-formulation)
         - [2. Meature cusal effects using observational Data](#2-meature-cusal-effects-using-observational-data)
         - [3. Learn by data](#3-learn-by-data)
+  - [Causal Machine Learning / Uplift Models](#causal-machine-learning--uplift-models)
+    - [CIA Assumption satisfied](#cia-assumption-satisfied)
+      - [Meta-Learners](#meta-learners)
+      - [Doubly Robust Learners (DRL)](#doubly-robust-learners-drl)
+      - [Double Machine Learning (DML)](#double-machine-learning-dml)
+      - [Tree-based Models (Causal Tree/Forest)](#tree-based-models-causal-treeforest)
+    - [CIA Assumption not satistifed](#cia-assumption-not-satistifed)
   - [Reading List](#reading-list)
 
 ## Consal Inference Key Concepts
@@ -71,18 +78,19 @@ Potential Outcome Framework (Neyman-Rubin Causal Model) (POM)
     1. ATE(Average Treatment Effect), ATT (Average Treatment on the Treated), CATE(Conditional Average Treatment Effect), HTE(Heterogeneous Treatment Effec), ITE(Individual Treatment Effect) , Intent-to-Treat, Local ATE
  2. Assumptions
     1. SUITVA (stable unit treatment value assmption)
-       1. No interference: potential outcome only varies by treatment
-       2. Consistency : no different versions of treatment
- 3. Under what conditions ATE is identifiable
-    1. Unconfoundedness/ ignorability/ Conditional Independence Assumption (CIA) / Exogeneity : no unmeasured confounders, given confounders' values, Treatment is independent from Potential Outcome
-    2. Positivity/Common Support: each unit have positive probailit to be trated
+    2. No interference: potential outcome only varies by treatment
+    3. Consistency : no different versions of treatment
+ 3. Under what conditions **ATE is identifiable**
+    1. Unconfoundedness/ ignorability/ **Conditional Independence Assumption (CIA)** / Exogeneity
+       1. no unmeasured confounders, given confounders' values, Treatment is independent from Potential Outcome
+    2. Positivity/Common Support/Overlap: each unit have positive probailit to be trated
 
 Structural Causal Models/ DAG (Directed Acyclic Graphs) (SCM)
 
 - Relationship definition
    1. Cahins (mediators) : X-> Z-> Y, Forks (confounders) X<-Z->Y, Colliders: X->Z<-Y
    2. d-separation
-- Do calculus
+- do calculus
   - Do operator (intervention)
   - Backdoor adjustment
   - Front Door adjustment
@@ -132,6 +140,143 @@ Sensitivity Analysis
 - add unobserved common causes
 - data subsets validation
 - Booststrap validation
+
+## Causal Machine Learning / Uplift Models
+
+> Application of Causal Models
+
+Causal Machine Learning/Uplift Models are just Machine Learning Models to learn Causal Relationships (Heterogenous treatment effects, HTEs) from experimental/observational data. It could be thought as traditional machine learning algorithms with structure constraints imposed (search in a smaller functional space). While most ML algorithms are good with prediction, it needs to follow Causal Inference assumptions/frameworks to learn proper causal relationships.
+
+Application in Ads/Recommender System
+
+- [EconML](https://econml.azurewebsites.net/spec/motivation.html)
+- Ads Delivery: ROI maximization (Cost minimization) under constraint of Daily New Users (DNU, or LT/LTV, Life Time/Life Time Value)
+- Inventive/Bonus Program: maximize commercial value (LTV) under the constraint of user stay time (Life Time)
+- Ads Strategy: Customize Ad Load/Ad Gap, maximize commercial value (Advertiser's value), minimize user experience loss(Stay time, Life Time, etc)
+
+### CIA Assumption satisfied
+
+As mentioned in POM Framework, Learn Causal Relationship from observational data needs to satisfy
+
+- SUIVA
+- CIA (or unconfoundedness under SCM framework)
+- postivity/overlap
+
+assumptions. We can inference
+
+$$E(Y|X=x, T=t) = E(\sum I(T=t') Y(t') | X=x, T=t] (SUITA)$$
+$$=E(\sum I(T=t') Y(t') | X=x) (CIA + positivity) $$
+$$=E(Y(t)|X=x)$$
+
+#### [Meta-Learners](https://arxiv.org/abs/1706.03461)
+
+- Pros:
+  - robust, can choose ML models at different state
+- Con
+  - may lose inference properties (confidence interval, asympototic normality)
+
+[S-Learner](https://econml.azurewebsites.net/spec/estimation/metalearners.html#s-learner)
+
+- $$\hat{\tau(x)} = E[Y(1) | x, T=1 ] -  E[Y(0) | x, T=0 ] = \hat{mu(x,1)} - \hat{mu_0(x, 0)}$$
+- Pros: simple, applies to sample size large or high singal-noise-ratio (SNR) scenario
+- Cons low sample utilization, has regularization bias
+
+[T-Learner](https://econml.azurewebsites.net/spec/estimation/metalearners.html#t-learner)
+
+- $$\hat{\tau(x)} = E[Y(1) | x ] -  E[Y(0) | x ] = \hat{mu_1(x)} - \hat{mu_0(x)}$$
+- Pros: simple, applies to sample size large or high singal-noise-ratio (SNR) scenario
+- Cons low sample utilization, has regularization bias, when X is high-dimensional, T's effect is hard to learn (highly biased, can be debiased by DRL)
+
+[X-Learner](https://econml.azurewebsites.net/spec/estimation/metalearners.html#s-learner)
+
+- estimates CATT(CATE on treated) and CATC (CATE on control) then take weighted average (by propensity score)
+- [Domain Adaptiation Learner](https://econml.azurewebsites.net/spec/estimation/metalearners.html#domain-adaptation-learner)
+- Tarnet
+
+#### Doubly Robust Learners (DRL)
+
+> [Formulation](https://econml.azurewebsites.net/spec/estimation/dr.html)
+
+Two tasks
+- predict Y based on confounders (X and W, X has fixed dimensions, W's dimension can increase with more samples)
+- predicted propensity score based on X, W
+- Categorical Treatments
+
+$$Y(t) = g_t(X, W) + \epsilon_t, E(\epsilon_t |X, W) = 0$$ (T-Learner)
+$$Pr(T=t |X, W) = p_t(X, W)$$
+$$\{Y(t)\}_{t=1}^{n_t} \perp T | X, W$$
+result:
+$$Y(t)_i^{DR} = g_t(X,W) + \frac{Y_i - g_t(X_i, W_i)}{p_t(X_i, W_i)}$$
+$$HTE = Y(1)_i^{DR} - Y(0)_i^{DR}$$
+
+- Pros
+  - "Robust" in a sense that one of two tasks is correct, estimation is correct (Debias to give more weights to unexpected sample results)
+  - improved sample utilization
+- Cons
+  - two models, hard to implment End-to-End
+
+End-to-End example
+
+- Dragonnet
+
+#### Double Machine Learning (DML)
+
+Two tasks
+
+- Predict Y based on X and W, only train on untreated data (control group)
+- predict T based on X, W
+
+$$Y(t) = \theta(X) \cdot T  + g(X, W) + \epsilon, E(\epsilon |X, W) = 0$$ (T-Learner)
+$$T = f(X, W) + \eta, E(\eta |X, W) = 0, E(\epsilon \cdot \eta |X, W) = 0 $$
+$\theta(X)$ is the treatment effect. To estimate it,
+$$Y(t) - E(Y | X, W)= \theta(X) \cdot (T - E(T | X, W)) + \epsilon$$ (substract expecation of Y)
+
+Build 2 Machine Learning Models
+
+- $$q(X, W) = E(Y | X, W)$$
+- $$f(X, W) = E(T | X, W)$$
+
+residuals of the two models
+
+- $$\tilde{Y} = Y- q(X, W)$$
+- $$\tilde{T} = T - q(X, W)$$
+
+then
+
+$$\tilde{Y} = \theta(X) \cdot  \tilde{T}+ \epsilon$$
+
+regress to get effect
+$$\theta(X) = argmin E_n[Loss(\tilde{Y} - \theta(X) \cdot \tilde{T})]$$
+
+Pros and Cons
+
+- can learn both discrete and continuous treatments
+- suitable for high-dimensional data
+- good inference property (when Neyman Orthogonality and corss fitting satistfied)
+- Suitable for tree-based models, LATE
+
+#### Tree-based Models (Causal Tree/Forest)
+
+> [EconML Link](https://econml.azurewebsites.net/spec/estimation/forest.html)
+
+Use DML Framework with Generalized Random Forest (Link)
+
+- Estimate LATE (Local likelihood), not global likelihood
+- Interpretable
+- Inference properties 
+
+Cons 
+
+- Binary Treatment
+
+
+
+
+### CIA Assumption not satistifed
+
+
+
+
 
 ## Reading List
 
