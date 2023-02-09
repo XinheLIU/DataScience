@@ -13,7 +13,9 @@
   - [Causal Machine Learning / Uplift Models](#causal-machine-learning--uplift-models)
     - [CIA Assumption satisfied](#cia-assumption-satisfied)
       - [Meta-Learners](#meta-learners)
+        - [Tarnet](#tarnet)
       - [Doubly Robust Learners (DRL)](#doubly-robust-learners-drl)
+        - [Dragonnet](#dragonnet)
       - [Double Machine Learning (DML)](#double-machine-learning-dml)
       - [Tree-based Models (Causal Tree/Forest)](#tree-based-models-causal-treeforest)
     - [CIA Assumption not satistifed](#cia-assumption-not-satistifed)
@@ -171,33 +173,46 @@ $$=E(Y(t)|X=x)$$
 #### [Meta-Learners](https://arxiv.org/abs/1706.03461)
 
 - Pros:
+  - simple, applies to sample size large or high singal-noise-ratio (SNR) scenario
   - robust, can choose ML models at different state
 - Con
+  - low sample utilization, has regularization bias, when X is high-dimensional, T's effect is hard to learn (highly biased, can be debiased by DRL)
   - may lose inference properties (confidence interval, asympototic normality)
 
 [S-Learner](https://econml.azurewebsites.net/spec/estimation/metalearners.html#s-learner)
 
-- $$\hat{\tau(x)} = E[Y(1) | x, T=1 ] -  E[Y(0) | x, T=0 ] = \hat{mu(x,1)} - \hat{mu_0(x, 0)}$$
-- Pros: simple, applies to sample size large or high singal-noise-ratio (SNR) scenario
-- Cons low sample utilization, has regularization bias
+  $$\hat{\tau(x)} = E[Y(1) | x, T=1 ] -  E[Y(0) | x, T=0 ] = \hat{mu(x,1)} - \hat{mu_0(x, 0)}$$
 
 [T-Learner](https://econml.azurewebsites.net/spec/estimation/metalearners.html#t-learner)
 
-- $$\hat{\tau(x)} = E[Y(1) | x ] -  E[Y(0) | x ] = \hat{mu_1(x)} - \hat{mu_0(x)}$$
-- Pros: simple, applies to sample size large or high singal-noise-ratio (SNR) scenario
-- Cons low sample utilization, has regularization bias, when X is high-dimensional, T's effect is hard to learn (highly biased, can be debiased by DRL)
+  $$\hat{\tau(x)} = E[Y(1) | x ] -  E[Y(0) | x ] = \hat{mu_1(x)} - \hat{mu_0(x)}$$
+
 
 [X-Learner](https://econml.azurewebsites.net/spec/estimation/metalearners.html#s-learner)
 
 - estimates CATT(CATE on treated) and CATC (CATE on control) then take weighted average (by propensity score)
 - [Domain Adaptiation Learner](https://econml.azurewebsites.net/spec/estimation/metalearners.html#domain-adaptation-learner)
-- Tarnet
+
+##### Tarnet
+
+- Pros
+  - simple plus some debias capabilities
+- Cons
+  - when low SNR or high bias, uplift could not be learned
 
 #### Doubly Robust Learners (DRL)
 
 > [Formulation](https://econml.azurewebsites.net/spec/estimation/dr.html)
 
+- Pros
+  - "Robust" in a sense that one of two tasks is correct, estimation is correct (Debias to give more weights to unexpected sample results)
+  - improved sample utilization
+- Cons
+  - two models, hard to implment End-to-End
+  - when high SNR or uplift, about similar performance as metalearners
+
 Two tasks
+
 - predict Y based on confounders (X and W, X has fixed dimensions, W's dimension can increase with more samples)
 - predicted propensity score based on X, W
 - Categorical Treatments
@@ -209,17 +224,22 @@ result:
 $$Y(t)_i^{DR} = g_t(X,W) + \frac{Y_i - g_t(X_i, W_i)}{p_t(X_i, W_i)}$$
 $$HTE = Y(1)_i^{DR} - Y(0)_i^{DR}$$
 
-- Pros
-  - "Robust" in a sense that one of two tasks is correct, estimation is correct (Debias to give more weights to unexpected sample results)
-  - improved sample utilization
-- Cons
-  - two models, hard to implment End-to-End
+##### Dragonnet
 
-End-to-End example
 
-- Dragonnet
 
 #### Double Machine Learning (DML)
+
+Pros and Cons
+
+- Pros
+  - can learn both discrete and continuous treatments
+  - suitable for high-dimensional data
+  - good inference property (when Neyman Orthogonality and corss fitting satistfied)
+- Suitable for tree-based models, LATE
+- Cons
+  - hard to implement end-to-end
+  - when high SNR or uplift, about similar performance as metalearners
 
 Two tasks
 
@@ -248,13 +268,6 @@ $$\tilde{Y} = \theta(X) \cdot  \tilde{T}+ \epsilon$$
 regress to get effect
 $$\theta(X) = argmin E_n[Loss(\tilde{Y} - \theta(X) \cdot \tilde{T})]$$
 
-Pros and Cons
-
-- can learn both discrete and continuous treatments
-- suitable for high-dimensional data
-- good inference property (when Neyman Orthogonality and corss fitting satistfied)
-- Suitable for tree-based models, LATE
-
 #### Tree-based Models (Causal Tree/Forest)
 
 > [EconML Link](https://econml.azurewebsites.net/spec/estimation/forest.html)
@@ -269,13 +282,7 @@ Cons
 
 - Binary Treatment
 
-
-
-
 ### CIA Assumption not satistifed
-
-
-
 
 
 ## Reading List
